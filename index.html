@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pokémon TCG Catálogo v1.1</title>
+<title>Pokémon TCG Catálogo v1.2</title>
 <style>
   :root {
     --bg-primary: #0d0d12;
@@ -83,7 +83,7 @@
     font-weight: normal;
   }
 
-  .user-badge {
+  .mode-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -93,10 +93,13 @@
     font-weight: 700;
     background: var(--bg-tertiary);
     border: 1px solid var(--border);
+    color: #7bd4ff;
   }
 
-  .user-badge.admin { color: var(--accent); border-color: var(--accent); }
-  .user-badge.cliente { color: #7bd4ff; border-color: #7bd4ff; }
+  .mode-badge.admin {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
 
   .header-actions {
     display: flex;
@@ -390,71 +393,6 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent-2); }
 
-  /* Login */
-  #loginScreen {
-    position: fixed;
-    inset: 0;
-    z-index: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(13, 13, 18, 0.95);
-  }
-
-  .login-box {
-    width: 100%;
-    max-width: 380px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    text-align: center;
-  }
-
-  .login-box .logo {
-    font-size: 2.5rem;
-    margin-bottom: 8px;
-  }
-
-  .login-box h2 {
-    color: var(--accent);
-    margin-bottom: 6px;
-  }
-
-  .login-box p {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-bottom: 20px;
-  }
-
-  .login-box .form-group { text-align: left; }
-
-  .login-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 16px;
-  }
-
-  .login-actions button { width: 100%; }
-
-  .login-hint {
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-  }
-
-  .login-hint code {
-    background: var(--bg-tertiary);
-    padding: 1px 5px;
-    border-radius: 4px;
-    color: var(--accent);
-  }
-
   .hidden { display: none !important; }
 
   /* Responsive */
@@ -472,49 +410,18 @@
 
 <div id="bgOverlay"></div>
 
-<!-- ===== PANTALLA DE LOGIN ===== -->
-<div id="loginScreen">
-  <div class="login-box">
-    <div class="logo">⚡</div>
-    <h2>Pokémon TCG</h2>
-    <p>Catálogo v1.1 · Inicia sesión</p>
-
-    <form id="loginForm">
-      <div class="form-group">
-        <label>Usuario</label>
-        <input type="text" id="loginUser" autocomplete="username" required>
-      </div>
-      <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" id="loginPass" autocomplete="current-password" required>
-      </div>
-
-      <div class="login-actions">
-        <button type="submit" class="btn-accent">Entrar</button>
-        <button type="button" class="btn-ghost" id="btnGuest">Entrar como Invitado (solo lectura)</button>
-      </div>
-    </form>
-
-    <div class="login-hint">
-      <div><strong>Admin por defecto:</strong> <code>admin</code> / <code>admin123</code></div>
-      <div style="margin-top:6px;">Cambia la contraseña después del primer ingreso.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== APP ===== -->
-<div class="app hidden" id="appRoot">
+<div class="app">
   <header>
     <h1>
       ⚡ Catálogo Pokémon TCG
-      <span class="version">v1.1</span>
-      <span class="user-badge" id="userBadge">—</span>
+      <span class="version">v1.2</span>
+      <span class="mode-badge" id="modeBadge">👁️ Modo Cliente</span>
     </h1>
     <div class="header-actions">
       <button class="btn-ghost" id="btnSettings">⚙️ Fondo</button>
-      <button class="btn-ghost" id="btnChangePass">🔑 Contraseña</button>
+      <button class="btn-ghost" id="btnAdminMode">🔒 Modo Admin</button>
       <button class="btn-accent hidden" id="btnAdd">+ Agregar Carta</button>
-      <button class="btn-danger" id="btnLogout">Salir</button>
+      <button class="btn-danger hidden" id="btnExitAdmin">🔓 Salir de Admin</button>
     </div>
   </header>
 
@@ -569,7 +476,7 @@
   <div class="grid" id="grid"></div>
 </div>
 
-<!-- Modal Agregar/Editar -->
+<!-- Modal Agregar/Editar Carta -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2 id="modalTitle">Agregar Carta</h2>
@@ -644,26 +551,21 @@
   </div>
 </div>
 
-<!-- Modal Cambiar Contraseña -->
-<div class="modal-overlay" id="passOverlay">
-  <div class="modal">
-    <h2>Cambiar Contraseña</h2>
-    <form id="passForm">
+<!-- Modal PIN Admin -->
+<div class="modal-overlay" id="pinOverlay">
+  <div class="modal" style="max-width:380px;">
+    <h2>🔒 Modo Administrador</h2>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">
+      Ingresa el PIN de administrador para habilitar los controles de edición.
+    </p>
+    <form id="pinForm">
       <div class="form-group">
-        <label>Contraseña actual</label>
-        <input type="password" id="oldPass" required>
-      </div>
-      <div class="form-group">
-        <label>Nueva contraseña (mín. 4 caracteres)</label>
-        <input type="password" id="newPass" required minlength="4">
-      </div>
-      <div class="form-group">
-        <label>Confirmar nueva contraseña</label>
-        <input type="password" id="confirmPass" required minlength="4">
+        <label>PIN</label>
+        <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" required style="text-align:center;font-size:1.4rem;letter-spacing:8px;">
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn-ghost" id="btnCancelPass">Cancelar</button>
-        <button type="submit" class="btn-accent">Guardar</button>
+        <button type="button" class="btn-ghost" id="btnCancelPin">Cancelar</button>
+        <button type="submit" class="btn-accent">Activar Admin</button>
       </div>
     </form>
   </div>
@@ -712,10 +614,10 @@
 // CONFIGURACIÓN INDEXEDDB
 // ============================================
 const DB_NAME = 'PokemonTCGCatalog';
-const DB_VERSION = 2; // subimos versión para añadir store de usuarios
+const DB_VERSION = 3; // subimos versión (los stores viejos se quedan, sólo añadimos si faltan)
 const STORE_CARDS = 'cards';
 const STORE_SETTINGS = 'settings';
-const STORE_USERS = 'users';
+const STORE_AUTH = 'auth'; // aquí guardamos el hash del PIN
 
 let db = null;
 
@@ -725,7 +627,6 @@ function openDB() {
 
     req.onupgradeneeded = (e) => {
       const database = e.target.result;
-
       if (!database.objectStoreNames.contains(STORE_CARDS)) {
         const store = database.createObjectStore(STORE_CARDS, { keyPath: 'id', autoIncrement: true });
         store.createIndex('name', 'name', { unique: false });
@@ -736,9 +637,8 @@ function openDB() {
       if (!database.objectStoreNames.contains(STORE_SETTINGS)) {
         database.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
       }
-      if (!database.objectStoreNames.contains(STORE_USERS)) {
-        const users = database.createObjectStore(STORE_USERS, { keyPath: 'username' });
-        users.createIndex('role', 'role', { unique: false });
+      if (!database.objectStoreNames.contains(STORE_AUTH)) {
+        database.createObjectStore(STORE_AUTH, { keyPath: 'key' });
       }
     };
 
@@ -798,10 +698,10 @@ function dbGet(storeName, key) {
 }
 
 // ============================================
-// HASH DE CONTRASEÑA (SHA-256 + salt básico)
+// HASH DEL PIN (SHA-256 + salt)
 // ============================================
-async function hashPassword(password, salt) {
-  const data = new TextEncoder().encode(salt + '::' + password);
+async function hashPin(pin, salt) {
+  const data = new TextEncoder().encode(salt + '::' + pin);
   const buf = await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -813,13 +713,31 @@ function genSalt() {
 }
 
 // ============================================
-// ESTADO DE SESIÓN
+// AUTENTICACIÓN CON PIN
 // ============================================
-let currentUser = null; // { username, role }
+const DEFAULT_PIN = '250396';
+
+async function ensurePinInitialized() {
+  const existing = await dbGet(STORE_AUTH, 'adminPin');
+  if (!existing) {
+    const salt = genSalt();
+    const hash = await hashPin(DEFAULT_PIN, salt);
+    await dbAdd(STORE_AUTH, { key: 'adminPin', salt, hash });
+    console.log('PIN de administrador inicializado.');
+  }
+}
+
+async function verifyPin(pin) {
+  const record = await dbGet(STORE_AUTH, 'adminPin');
+  if (!record) return false;
+  const hash = await hashPin(pin, record.salt);
+  return hash === record.hash;
+}
 
 // ============================================
-// ESTADO GENERAL
+// ESTADO
 // ============================================
+let isAdminMode = false;
 let allCards = [];
 let editingId = null;
 let pendingImageData = null;
@@ -846,94 +764,66 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function isAdmin() {
-  return currentUser && currentUser.role === 'admin';
-}
-
 // ============================================
-// USUARIOS
+// MODO ADMIN
 // ============================================
-async function ensureDefaultAdmin() {
-  const existing = await dbGet(STORE_USERS, 'admin');
-  if (!existing) {
-    const salt = genSalt();
-    const hash = await hashPassword('admin123', salt);
-    await dbAdd(STORE_USERS, {
-      username: 'admin',
-      role: 'admin',
-      salt,
-      hash,
-      createdAt: Date.now()
-    });
-    console.log('Usuario admin por defecto creado (admin / admin123)');
-  }
-}
-
-async function login(username, password) {
-  const user = await dbGet(STORE_USERS, username);
-  if (!user) return null;
-
-  const hash = await hashPassword(password, user.salt);
-  if (hash !== user.hash) return null;
-
-  return { username: user.username, role: user.role };
-}
-
-async function changePassword(username, oldPass, newPass) {
-  const user = await dbGet(STORE_USERS, username);
-  if (!user) throw new Error('Usuario no encontrado');
-
-  const oldHash = await hashPassword(oldPass, user.salt);
-  if (oldHash !== user.hash) throw new Error('Contraseña actual incorrecta');
-
-  const newSalt = genSalt();
-  const newHash = await hashPassword(newPass, newSalt);
-  user.salt = newSalt;
-  user.hash = newHash;
-  await dbPut(STORE_USERS, user);
-}
-
-// ============================================
-// UI DE SESIÓN
-// ============================================
-function updateUIBasedOnRole() {
-  const badge = document.getElementById('userBadge');
+function updateModeUI() {
+  const badge = document.getElementById('modeBadge');
+  const btnAdmin = document.getElementById('btnAdminMode');
   const btnAdd = document.getElementById('btnAdd');
+  const btnExit = document.getElementById('btnExitAdmin');
 
-  if (!currentUser) {
-    badge.textContent = '—';
-    return;
-  }
-
-  const roleLabel = currentUser.role === 'admin' ? 'ADMIN' : 'CLIENTE';
-  badge.textContent = `${currentUser.username} · ${roleLabel}`;
-  badge.className = 'user-badge ' + (isAdmin() ? 'admin' : 'cliente');
-
-  if (isAdmin()) {
+  if (isAdminMode) {
+    badge.textContent = '🛠️ Modo Admin';
+    badge.className = 'mode-badge admin';
+    btnAdmin.classList.add('hidden');
     btnAdd.classList.remove('hidden');
+    btnExit.classList.remove('hidden');
   } else {
+    badge.textContent = '👁️ Modo Cliente';
+    badge.className = 'mode-badge';
+    btnAdmin.classList.remove('hidden');
     btnAdd.classList.add('hidden');
+    btnExit.classList.add('hidden');
   }
+
+  renderCards(getFilteredCards());
 }
 
-function showApp() {
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('appRoot').classList.remove('hidden');
-  updateUIBasedOnRole();
-  applyFilters();
+function enterAdminMode() {
+  isAdminMode = true;
+  updateModeUI();
+  showToast('Modo Admin activado 🛠️');
 }
 
-function showLogin() {
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('appRoot').classList.add('hidden');
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
-  document.getElementById('loginUser').focus();
+function exitAdminMode() {
+  isAdminMode = false;
+  // Cerrar cualquier modal de edición abierto
+  closeModal();
+  updateModeUI();
+  showToast('Modo Cliente (solo lectura)');
 }
 
 // ============================================
 // RENDERIZADO
 // ============================================
+function getFilteredCards() {
+  const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+  const category = document.getElementById('filterCategory').value;
+  const rarity = document.getElementById('filterRarity').value;
+  const priceMin = parseFloat(document.getElementById('filterPriceMin').value);
+  const priceMax = parseFloat(document.getElementById('filterPriceMax').value);
+
+  return allCards.filter(card => {
+    if (search && !card.name.toLowerCase().includes(search)) return false;
+    if (category && card.category !== category) return false;
+    if (rarity && card.rarity !== rarity) return false;
+    if (!isNaN(priceMin) && card.price < priceMin) return false;
+    if (!isNaN(priceMax) && card.price > priceMax) return false;
+    return true;
+  });
+}
+
 function renderCards(cards) {
   const grid = document.getElementById('grid');
   const counter = document.getElementById('counter');
@@ -950,7 +840,7 @@ function renderCards(cards) {
   }
 
   grid.innerHTML = cards.map(card => {
-    const adminButtons = isAdmin()
+    const adminButtons = isAdminMode
       ? `<div class="card-actions">
            <button class="btn-primary btn-small" onclick="editCard(${card.id})">Editar</button>
            <button class="btn-danger btn-small" onclick="confirmDelete(${card.id})">Eliminar</button>
@@ -974,22 +864,7 @@ function renderCards(cards) {
 }
 
 function applyFilters() {
-  const search = document.getElementById('filterSearch').value.toLowerCase().trim();
-  const category = document.getElementById('filterCategory').value;
-  const rarity = document.getElementById('filterRarity').value;
-  const priceMin = parseFloat(document.getElementById('filterPriceMin').value);
-  const priceMax = parseFloat(document.getElementById('filterPriceMax').value);
-
-  const filtered = allCards.filter(card => {
-    if (search && !card.name.toLowerCase().includes(search)) return false;
-    if (category && card.category !== category) return false;
-    if (rarity && card.rarity !== rarity) return false;
-    if (!isNaN(priceMin) && card.price < priceMin) return false;
-    if (!isNaN(priceMax) && card.price > priceMax) return false;
-    return true;
-  });
-
-  renderCards(filtered);
+  renderCards(getFilteredCards());
 }
 
 // ============================================
@@ -1007,8 +882,8 @@ async function loadCards() {
 }
 
 function openModal(card = null) {
-  if (!isAdmin()) {
-    showToast('Solo el administrador puede editar cartas', true);
+  if (!isAdminMode) {
+    showToast('Activa el Modo Admin primero', true);
     return;
   }
 
@@ -1049,7 +924,7 @@ function closeModal() {
 async function saveCard(e) {
   e.preventDefault();
 
-  if (!isAdmin()) {
+  if (!isAdminMode) {
     showToast('Sin permisos', true);
     return;
   }
@@ -1087,13 +962,13 @@ async function saveCard(e) {
 }
 
 function editCard(id) {
-  if (!isAdmin()) return;
+  if (!isAdminMode) return;
   const card = allCards.find(c => c.id === id);
   if (card) openModal(card);
 }
 
 async function confirmDelete(id) {
-  if (!isAdmin()) return;
+  if (!isAdminMode) return;
   const card = allCards.find(c => c.id === id);
   if (!card) return;
   if (!confirm(`¿Eliminar "${card.name}" del catálogo?`)) return;
@@ -1253,67 +1128,41 @@ async function clearBackground() {
 // EVENTOS
 // ============================================
 function initEvents() {
-  // ----- Login -----
-  document.getElementById('loginForm').onsubmit = async (e) => {
+  // ----- Modo Admin -----
+  document.getElementById('btnAdminMode').onclick = () => {
+    document.getElementById('pinForm').reset();
+    document.getElementById('pinOverlay').classList.add('active');
+    setTimeout(() => document.getElementById('pinInput').focus(), 100);
+  };
+
+  document.getElementById('btnCancelPin').onclick = () => {
+    document.getElementById('pinOverlay').classList.remove('active');
+  };
+
+  document.getElementById('pinOverlay').onclick = (e) => {
+    if (e.target.id === 'pinOverlay') {
+      document.getElementById('pinOverlay').classList.remove('active');
+    }
+  };
+
+  document.getElementById('pinForm').onsubmit = async (e) => {
     e.preventDefault();
-    const user = document.getElementById('loginUser').value.trim();
-    const pass = document.getElementById('loginPass').value;
-    try {
-      const u = await login(user, pass);
-      if (!u) {
-        showToast('Usuario o contraseña incorrectos', true);
-        return;
-      }
-      currentUser = u;
-      showApp();
-      showToast(`Bienvenido, ${u.username} (${u.role})`);
-    } catch (err) {
-      console.error(err);
-      showToast('Error al iniciar sesión', true);
+    const pin = document.getElementById('pinInput').value.trim();
+    if (!pin) return;
+
+    const ok = await verifyPin(pin);
+    if (ok) {
+      document.getElementById('pinOverlay').classList.remove('active');
+      enterAdminMode();
+    } else {
+      showToast('PIN incorrecto', true);
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinInput').focus();
     }
   };
 
-  document.getElementById('btnGuest').onclick = () => {
-    currentUser = { username: 'Invitado', role: 'cliente' };
-    showApp();
-    showToast('Modo lectura (invitado)');
-  };
-
-  document.getElementById('btnLogout').onclick = () => {
-    currentUser = null;
-    showLogin();
-    showToast('Sesión cerrada');
-  };
-
-  // ----- Cambiar contraseña -----
-  document.getElementById('btnChangePass').onclick = () => {
-    if (!currentUser) return;
-    document.getElementById('passForm').reset();
-    document.getElementById('passOverlay').classList.add('active');
-  };
-
-  document.getElementById('btnCancelPass').onclick = () => {
-    document.getElementById('passOverlay').classList.remove('active');
-  };
-
-  document.getElementById('passForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const oldPass = document.getElementById('oldPass').value;
-    const newPass = document.getElementById('newPass').value;
-    const confirmPass = document.getElementById('confirmPass').value;
-
-    if (newPass !== confirmPass) {
-      showToast('Las contraseñas no coinciden', true);
-      return;
-    }
-
-    try {
-      await changePassword(currentUser.username, oldPass, newPass);
-      showToast('Contraseña actualizada ✓');
-      document.getElementById('passOverlay').classList.remove('active');
-    } catch (err) {
-      showToast(err.message || 'Error al cambiar contraseña', true);
-    }
+  document.getElementById('btnExitAdmin').onclick = () => {
+    exitAdminMode();
   };
 
   // ----- Cartas -----
@@ -1329,15 +1178,10 @@ function initEvents() {
       document.getElementById('settingsOverlay').classList.remove('active');
     }
   };
-  document.getElementById('passOverlay').onclick = (e) => {
-    if (e.target.id === 'passOverlay') {
-      document.getElementById('passOverlay').classList.remove('active');
-    }
-  };
 
   // Imagen de carta
   document.getElementById('imageUpload').onclick = () => {
-    if (!isAdmin()) return;
+    if (!isAdminMode) return;
     document.getElementById('cardImage').click();
   };
 
@@ -1427,11 +1271,11 @@ function initEvents() {
 async function init() {
   try {
     db = await openDB();
-    await ensureDefaultAdmin();
+    await ensurePinInitialized();
     await loadBackground();
     await loadCards();
     initEvents();
-    showLogin();
+    updateModeUI();
   } catch (err) {
     console.error(err);
     alert('Error al inicializar la base de datos: ' + err.message);
