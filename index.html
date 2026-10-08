@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pokémon TCG Catálogo v1.0</title>
+<title>Pokémon TCG Catálogo v1.1</title>
 <style>
   :root {
     --bg-primary: #0d0d12;
@@ -16,7 +16,6 @@
     --border: #33334a;
     --danger: #e63946;
     --success: #2ecc71;
-    --overlay-alpha: 0.88;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,7 +37,6 @@
     position: relative;
   }
 
-  /* Overlay como div real */
   #bgOverlay {
     position: fixed;
     inset: 0;
@@ -73,6 +71,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
   }
 
   h1 .version {
@@ -83,6 +82,21 @@
     border-radius: 10px;
     font-weight: normal;
   }
+
+  .user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+  }
+
+  .user-badge.admin { color: var(--accent); border-color: var(--accent); }
+  .user-badge.cliente { color: #7bd4ff; border-color: #7bd4ff; }
 
   .header-actions {
     display: flex;
@@ -336,7 +350,6 @@
     flex-wrap: wrap;
   }
 
-  /* Estado vacío */
   .empty {
     text-align: center;
     padding: 60px 20px;
@@ -352,7 +365,6 @@
     margin-bottom: 12px;
   }
 
-  /* Toast */
   .toast {
     position: fixed;
     bottom: 24px;
@@ -373,15 +385,81 @@
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.error { border-color: var(--danger); }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: var(--bg-primary); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent-2); }
 
+  /* Login */
+  #loginScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(13, 13, 18, 0.95);
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 380px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+  }
+
+  .login-box .logo {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+  }
+
+  .login-box h2 {
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .login-box p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+
+  .login-box .form-group { text-align: left; }
+
+  .login-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .login-actions button { width: 100%; }
+
+  .login-hint {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .login-hint code {
+    background: var(--bg-tertiary);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  .hidden { display: none !important; }
+
   /* Responsive */
   @media (max-width: 640px) {
-    h1 { font-size: 1.3rem; }
+    h1 { font-size: 1.2rem; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
     .form-row { grid-template-columns: 1fr; }
     .header-actions { width: 100%; }
@@ -394,16 +472,52 @@
 
 <div id="bgOverlay"></div>
 
-<div class="app">
+<!-- ===== PANTALLA DE LOGIN ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="logo">⚡</div>
+    <h2>Pokémon TCG</h2>
+    <p>Catálogo v1.1 · Inicia sesión</p>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="loginUser" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" autocomplete="current-password" required>
+      </div>
+
+      <div class="login-actions">
+        <button type="submit" class="btn-accent">Entrar</button>
+        <button type="button" class="btn-ghost" id="btnGuest">Entrar como Invitado (solo lectura)</button>
+      </div>
+    </form>
+
+    <div class="login-hint">
+      <div><strong>Admin por defecto:</strong> <code>admin</code> / <code>admin123</code></div>
+      <div style="margin-top:6px;">Cambia la contraseña después del primer ingreso.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div class="app hidden" id="appRoot">
   <header>
-    <h1>⚡ Catálogo Pokémon TCG <span class="version">v1.0</span></h1>
+    <h1>
+      ⚡ Catálogo Pokémon TCG
+      <span class="version">v1.1</span>
+      <span class="user-badge" id="userBadge">—</span>
+    </h1>
     <div class="header-actions">
       <button class="btn-ghost" id="btnSettings">⚙️ Fondo</button>
-      <button class="btn-accent" id="btnAdd">+ Agregar Carta</button>
+      <button class="btn-ghost" id="btnChangePass">🔑 Contraseña</button>
+      <button class="btn-accent hidden" id="btnAdd">+ Agregar Carta</button>
+      <button class="btn-danger" id="btnLogout">Salir</button>
     </div>
   </header>
 
-  <!-- Filtros -->
   <section class="filters">
     <div class="filter-group">
       <label>Buscar</label>
@@ -530,6 +644,31 @@
   </div>
 </div>
 
+<!-- Modal Cambiar Contraseña -->
+<div class="modal-overlay" id="passOverlay">
+  <div class="modal">
+    <h2>Cambiar Contraseña</h2>
+    <form id="passForm">
+      <div class="form-group">
+        <label>Contraseña actual</label>
+        <input type="password" id="oldPass" required>
+      </div>
+      <div class="form-group">
+        <label>Nueva contraseña (mín. 4 caracteres)</label>
+        <input type="password" id="newPass" required minlength="4">
+      </div>
+      <div class="form-group">
+        <label>Confirmar nueva contraseña</label>
+        <input type="password" id="confirmPass" required minlength="4">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="btnCancelPass">Cancelar</button>
+        <button type="submit" class="btn-accent">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Modal Configuración de Fondo -->
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal">
@@ -551,9 +690,6 @@
     <div class="form-group">
       <label>Opacidad del overlay: <span id="opacityValue">88</span>%</label>
       <input type="range" id="bgOpacity" min="0" max="100" value="88">
-      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
-        Más bajo = fondo más visible. Más alto = fondo más oscurecido.
-      </div>
     </div>
 
     <div id="bgPreviewWrap" style="display:none;margin-bottom:14px;">
@@ -576,9 +712,10 @@
 // CONFIGURACIÓN INDEXEDDB
 // ============================================
 const DB_NAME = 'PokemonTCGCatalog';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // subimos versión para añadir store de usuarios
 const STORE_CARDS = 'cards';
 const STORE_SETTINGS = 'settings';
+const STORE_USERS = 'users';
 
 let db = null;
 
@@ -588,6 +725,7 @@ function openDB() {
 
     req.onupgradeneeded = (e) => {
       const database = e.target.result;
+
       if (!database.objectStoreNames.contains(STORE_CARDS)) {
         const store = database.createObjectStore(STORE_CARDS, { keyPath: 'id', autoIncrement: true });
         store.createIndex('name', 'name', { unique: false });
@@ -597,6 +735,10 @@ function openDB() {
       }
       if (!database.objectStoreNames.contains(STORE_SETTINGS)) {
         database.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
+      }
+      if (!database.objectStoreNames.contains(STORE_USERS)) {
+        const users = database.createObjectStore(STORE_USERS, { keyPath: 'username' });
+        users.createIndex('role', 'role', { unique: false });
       }
     };
 
@@ -656,12 +798,32 @@ function dbGet(storeName, key) {
 }
 
 // ============================================
-// ESTADO
+// HASH DE CONTRASEÑA (SHA-256 + salt básico)
+// ============================================
+async function hashPassword(password, salt) {
+  const data = new TextEncoder().encode(salt + '::' + password);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function genSalt() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ============================================
+// ESTADO DE SESIÓN
+// ============================================
+let currentUser = null; // { username, role }
+
+// ============================================
+// ESTADO GENERAL
 // ============================================
 let allCards = [];
 let editingId = null;
 let pendingImageData = null;
-let pendingBgData = null; // Cambio pendiente para aplicar sólo al presionar "Aplicar"
+let pendingBgData = null;
 
 // ============================================
 // UTILIDADES
@@ -684,6 +846,91 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function isAdmin() {
+  return currentUser && currentUser.role === 'admin';
+}
+
+// ============================================
+// USUARIOS
+// ============================================
+async function ensureDefaultAdmin() {
+  const existing = await dbGet(STORE_USERS, 'admin');
+  if (!existing) {
+    const salt = genSalt();
+    const hash = await hashPassword('admin123', salt);
+    await dbAdd(STORE_USERS, {
+      username: 'admin',
+      role: 'admin',
+      salt,
+      hash,
+      createdAt: Date.now()
+    });
+    console.log('Usuario admin por defecto creado (admin / admin123)');
+  }
+}
+
+async function login(username, password) {
+  const user = await dbGet(STORE_USERS, username);
+  if (!user) return null;
+
+  const hash = await hashPassword(password, user.salt);
+  if (hash !== user.hash) return null;
+
+  return { username: user.username, role: user.role };
+}
+
+async function changePassword(username, oldPass, newPass) {
+  const user = await dbGet(STORE_USERS, username);
+  if (!user) throw new Error('Usuario no encontrado');
+
+  const oldHash = await hashPassword(oldPass, user.salt);
+  if (oldHash !== user.hash) throw new Error('Contraseña actual incorrecta');
+
+  const newSalt = genSalt();
+  const newHash = await hashPassword(newPass, newSalt);
+  user.salt = newSalt;
+  user.hash = newHash;
+  await dbPut(STORE_USERS, user);
+}
+
+// ============================================
+// UI DE SESIÓN
+// ============================================
+function updateUIBasedOnRole() {
+  const badge = document.getElementById('userBadge');
+  const btnAdd = document.getElementById('btnAdd');
+
+  if (!currentUser) {
+    badge.textContent = '—';
+    return;
+  }
+
+  const roleLabel = currentUser.role === 'admin' ? 'ADMIN' : 'CLIENTE';
+  badge.textContent = `${currentUser.username} · ${roleLabel}`;
+  badge.className = 'user-badge ' + (isAdmin() ? 'admin' : 'cliente');
+
+  if (isAdmin()) {
+    btnAdd.classList.remove('hidden');
+  } else {
+    btnAdd.classList.add('hidden');
+  }
+}
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appRoot').classList.remove('hidden');
+  updateUIBasedOnRole();
+  applyFilters();
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appRoot').classList.add('hidden');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginUser').focus();
+}
+
 // ============================================
 // RENDERIZADO
 // ============================================
@@ -697,12 +944,20 @@ function renderCards(cards) {
     grid.innerHTML = `
       <div class="empty">
         <div class="empty-icon">🃏</div>
-        <div>${allCards.length === 0 ? 'No hay cartas en el catálogo. ¡Agrega la primera!' : 'No se encontraron cartas con esos filtros.'}</div>
+        <div>${allCards.length === 0 ? 'No hay cartas en el catálogo.' : 'No se encontraron cartas con esos filtros.'}</div>
       </div>`;
     return;
   }
 
-  grid.innerHTML = cards.map(card => `
+  grid.innerHTML = cards.map(card => {
+    const adminButtons = isAdmin()
+      ? `<div class="card-actions">
+           <button class="btn-primary btn-small" onclick="editCard(${card.id})">Editar</button>
+           <button class="btn-danger btn-small" onclick="confirmDelete(${card.id})">Eliminar</button>
+         </div>`
+      : '';
+
+    return `
     <div class="card" data-id="${card.id}">
       ${card.image
         ? `<img class="card-image" src="${card.image}" alt="${escapeHtml(card.name)}" loading="lazy">`
@@ -713,12 +968,9 @@ function renderCards(cards) {
         <div class="card-rarity">${escapeHtml(card.rarity)} · x${card.quantity || 1}</div>
         <div class="card-price">${formatPrice(card.price)}</div>
       </div>
-      <div class="card-actions">
-        <button class="btn-primary btn-small" onclick="editCard(${card.id})">Editar</button>
-        <button class="btn-danger btn-small" onclick="confirmDelete(${card.id})">Eliminar</button>
-      </div>
-    </div>
-  `).join('');
+      ${adminButtons}
+    </div>`;
+  }).join('');
 }
 
 function applyFilters() {
@@ -741,7 +993,7 @@ function applyFilters() {
 }
 
 // ============================================
-// CRUD
+// CRUD CARTAS
 // ============================================
 async function loadCards() {
   try {
@@ -755,6 +1007,11 @@ async function loadCards() {
 }
 
 function openModal(card = null) {
+  if (!isAdmin()) {
+    showToast('Solo el administrador puede editar cartas', true);
+    return;
+  }
+
   editingId = card ? card.id : null;
   pendingImageData = card ? card.image : null;
 
@@ -792,6 +1049,11 @@ function closeModal() {
 async function saveCard(e) {
   e.preventDefault();
 
+  if (!isAdmin()) {
+    showToast('Sin permisos', true);
+    return;
+  }
+
   const cardData = {
     name: document.getElementById('cardName').value.trim(),
     category: document.getElementById('cardCategory').value,
@@ -825,11 +1087,13 @@ async function saveCard(e) {
 }
 
 function editCard(id) {
+  if (!isAdmin()) return;
   const card = allCards.find(c => c.id === id);
   if (card) openModal(card);
 }
 
 async function confirmDelete(id) {
+  if (!isAdmin()) return;
   const card = allCards.find(c => c.id === id);
   if (!card) return;
   if (!confirm(`¿Eliminar "${card.name}" del catálogo?`)) return;
@@ -889,7 +1153,6 @@ function handleImageUpload(file, callback) {
 // ============================================
 function applyBackgroundToDOM(imageData, opacityPct) {
   const body = document.body;
-
   if (imageData) {
     body.style.backgroundImage = `url("${imageData}")`;
     body.style.backgroundSize = 'cover';
@@ -899,7 +1162,6 @@ function applyBackgroundToDOM(imageData, opacityPct) {
   } else {
     body.style.backgroundImage = 'none';
   }
-
   const alpha = (opacityPct ?? 88) / 100;
   document.getElementById('bgOverlay').style.background = `rgba(13, 13, 18, ${alpha})`;
 }
@@ -912,12 +1174,10 @@ async function loadBackground() {
 
     applyBackgroundToDOM(bg ? bg.value : null, opacity);
 
-    // Rellenar el modal
     document.getElementById('bgOpacity').value = opacity;
     document.getElementById('opacityValue').textContent = opacity;
 
     if (bg && bg.value) {
-      // Si es una URL http/https la mostramos en el input
       if (bg.value.startsWith('data:')) {
         document.getElementById('bgUrlInput').value = '';
         showPreview(bg.value);
@@ -948,15 +1208,12 @@ async function saveBackground() {
     const url = document.getElementById('bgUrlInput').value.trim();
     const opacity = parseInt(document.getElementById('bgOpacity').value);
 
-    let finalImage = pendingBgData || url || null;
-
-    // Si hay URL en el input, priorizamos el archivo pendiente si existe
+    let finalImage;
     if (pendingBgData) {
       finalImage = pendingBgData;
     } else if (url) {
       finalImage = url;
     } else {
-      // No hay ni archivo ni url: conservar el que ya está en DB
       const existing = await dbGet(STORE_SETTINGS, 'background');
       finalImage = existing ? existing.value : null;
     }
@@ -989,7 +1246,6 @@ async function clearBackground() {
     showToast('Fondo eliminado');
   } catch (err) {
     console.error(err);
-    showToast('Error al quitar fondo', true);
   }
 }
 
@@ -997,6 +1253,70 @@ async function clearBackground() {
 // EVENTOS
 // ============================================
 function initEvents() {
+  // ----- Login -----
+  document.getElementById('loginForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    try {
+      const u = await login(user, pass);
+      if (!u) {
+        showToast('Usuario o contraseña incorrectos', true);
+        return;
+      }
+      currentUser = u;
+      showApp();
+      showToast(`Bienvenido, ${u.username} (${u.role})`);
+    } catch (err) {
+      console.error(err);
+      showToast('Error al iniciar sesión', true);
+    }
+  };
+
+  document.getElementById('btnGuest').onclick = () => {
+    currentUser = { username: 'Invitado', role: 'cliente' };
+    showApp();
+    showToast('Modo lectura (invitado)');
+  };
+
+  document.getElementById('btnLogout').onclick = () => {
+    currentUser = null;
+    showLogin();
+    showToast('Sesión cerrada');
+  };
+
+  // ----- Cambiar contraseña -----
+  document.getElementById('btnChangePass').onclick = () => {
+    if (!currentUser) return;
+    document.getElementById('passForm').reset();
+    document.getElementById('passOverlay').classList.add('active');
+  };
+
+  document.getElementById('btnCancelPass').onclick = () => {
+    document.getElementById('passOverlay').classList.remove('active');
+  };
+
+  document.getElementById('passForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const oldPass = document.getElementById('oldPass').value;
+    const newPass = document.getElementById('newPass').value;
+    const confirmPass = document.getElementById('confirmPass').value;
+
+    if (newPass !== confirmPass) {
+      showToast('Las contraseñas no coinciden', true);
+      return;
+    }
+
+    try {
+      await changePassword(currentUser.username, oldPass, newPass);
+      showToast('Contraseña actualizada ✓');
+      document.getElementById('passOverlay').classList.remove('active');
+    } catch (err) {
+      showToast(err.message || 'Error al cambiar contraseña', true);
+    }
+  };
+
+  // ----- Cartas -----
   document.getElementById('btnAdd').onclick = () => openModal();
   document.getElementById('btnCancel').onclick = closeModal;
   document.getElementById('cardForm').onsubmit = saveCard;
@@ -1009,9 +1329,15 @@ function initEvents() {
       document.getElementById('settingsOverlay').classList.remove('active');
     }
   };
+  document.getElementById('passOverlay').onclick = (e) => {
+    if (e.target.id === 'passOverlay') {
+      document.getElementById('passOverlay').classList.remove('active');
+    }
+  };
 
   // Imagen de carta
   document.getElementById('imageUpload').onclick = () => {
+    if (!isAdmin()) return;
     document.getElementById('cardImage').click();
   };
 
@@ -1041,7 +1367,7 @@ function initEvents() {
     applyFilters();
   };
 
-  // Settings
+  // Settings fondo
   document.getElementById('btnSettings').onclick = () => {
     pendingBgData = null;
     document.getElementById('bgFileInput').value = '';
@@ -1057,12 +1383,10 @@ function initEvents() {
   document.getElementById('btnSaveBg').onclick = saveBackground;
   document.getElementById('btnClearBg').onclick = clearBackground;
 
-  // Opacidad en vivo (sólo visual dentro del modal, se guarda al Aplicar)
   document.getElementById('bgOpacity').oninput = (e) => {
     document.getElementById('opacityValue').textContent = e.target.value;
   };
 
-  // URL input -> preview
   document.getElementById('bgUrlInput').oninput = (e) => {
     const url = e.target.value.trim();
     if (url) {
@@ -1073,7 +1397,6 @@ function initEvents() {
     }
   };
 
-  // Subir archivo de fondo
   document.getElementById('bgFileInput').onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1094,7 +1417,6 @@ function initEvents() {
       showPreview(dataUrl);
       showToast('Imagen lista. Presiona "Aplicar" para guardar.');
     };
-    reader.onerror = () => showToast('Error al leer el archivo', true);
     reader.readAsDataURL(file);
   };
 }
@@ -1105,9 +1427,11 @@ function initEvents() {
 async function init() {
   try {
     db = await openDB();
+    await ensureDefaultAdmin();
     await loadBackground();
     await loadCards();
     initEvents();
+    showLogin();
   } catch (err) {
     console.error(err);
     alert('Error al inicializar la base de datos: ' + err.message);
@@ -1116,7 +1440,6 @@ async function init() {
 
 init();
 
-// Exponer funciones globales usadas en onclick
 window.editCard = editCard;
 window.confirmDelete = confirmDelete;
 </script>
